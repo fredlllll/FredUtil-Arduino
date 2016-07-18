@@ -9,7 +9,7 @@ class FredThermistor{
 		
 	}
 	
-	double TemperatureFromRawADC(const int rawADC, const uint8_t adcBits = 10) const{
+	double temperatureFromRawADC(const int rawADC, const uint8_t adcBits = 10) const{
 		union { //cleaner reuse of variables
 			double adc;
 			double resistance;

@@ -16,6 +16,10 @@ struct DigitalPin{
 	inline void setOutput() const {
 		pinMode(pin,OUTPUT);
 	}
+
+	inline void setInputPullup()const {
+		pinMode(pin, INPUT_PULLUP);
+	}
 	
 	inline void setHigh() const {
 		digitalWrite(pin,HIGH);

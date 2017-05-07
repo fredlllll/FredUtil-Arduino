@@ -12,7 +12,7 @@ template<uint8_t count> inline void nop(){
 }
 
 template<> inline void nop<0>(){
-  
+  //do nothing. this is needed so the above nop recursion ends
 }
 
 // this switches on specific pins on PORTD (D0 to D7). each switch takes 2 cycles

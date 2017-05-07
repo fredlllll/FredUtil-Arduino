@@ -1,7 +1,7 @@
 // this holds code that is associated with optimizations
 
 /*
-methods for usage:
+methods for usage (you can use const variables for the arguments in <>):
     nop<count>();
         emits 'count' nop instructions in the binary. one nop == 1 cycle
     switchOn<pin>();

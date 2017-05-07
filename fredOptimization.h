@@ -7,8 +7,8 @@
 // const uint8_t count = 5; //const is important here
 // nop<count>();
 template<uint8_t count> inline void nop(){
-  nop<count-1>();
-  __asm__("nop\n\t");
+  nop<count - 1>();
+  __asm__ __volatile__("nop\n\t");
 }
 
 template<> inline void nop<0>(){

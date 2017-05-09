@@ -23,22 +23,25 @@ the described methods throw static assertion errors if they detect that you used
 
 template<long count> __attribute__((always_inline)) inline void nop();
 
-template<long nanos> struct NanosToCycles{
-    enum { cycles = (long)(nanos / ((double)1000000000/F_CPU)) };
-};
+constexpr long nanosToCycles(long nanos){
+    return (long)(nanos / ((double)1000000000/F_CPU));
+}
 
-const uint8_t cyclesPerLoop = 7;
-template<long nanos> inline void delayNanoseconds(){
-    if( NanosToCycles<nanos>::cycles <= cyclesPerLoop){
-        nop<NanosToCycles<nanos>::cycles>();
-    }else{
-        //TODO: force gcc to NOT unroll the loop. adding volatile fucks with the code too much though
-        for(volatile long i = 0; i< NanosToCycles<nanos>::cycles/cyclesPerLoop;i++ ){
-            __asm__ __volatile__("");
-        }
-        nop<1>();//loop uses 1 cycle less on last iteration, cause its not branching
-        nop<NanosToCycles<nanos>::cycles%cyclesPerLoop>();
+constexpr long positiveElseZero(long value){
+    return value > 0 ? value : 0;
+}
+
+const uint8_t cyclesPerLoop = 8;
+const uint8_t cyclesPerCallRet = 4 + 4;//call and ret use 4 on avrs that have a 16 bit program counter and 5 for 22 bit. dont think there is a macro for that though
+const uint8_t noInlineCycles = cyclesPerCallRet + cyclesPerLoop; // delayCyclesNoInline takes this many cycles to complete with internalCycles = cyclesPerLoop
+template<long internalCycles> __attribute__((noinline)) void delayCyclesNoInline(){ //no inline to force call and ret which adds 8 cycles
+    //TODO: this loop unrolls for low values, have to find a way to fix this without resorting to inline assembly
+    for(long i = 0; i < (internalCycles/cyclesPerLoop); i++){
+        nop<1>();
     }
+    nop<1>();//loop uses 1 cycle less on last iteration, cause its not branching
+    nop<positiveElseZero(internalCycles%cyclesPerLoop)>();
+    
     /*
     adiw	r24, 0x01	; 1
     cpi	r24, 0x73	; 115
@@ -47,21 +50,35 @@ template<long nanos> inline void delayNanoseconds(){
     */
 }
 
-template<long nanos> __attribute__((error("this is currently broken"))) inline void delayNanoseconds();
+template<> __attribute__((noinline)) void delayCyclesNoInline<0>(){
+    // 8 cycles
+}
 
-template<> inline void delayNanoseconds<0>(){
-    
+template<long cycles> __attribute__((always_inline)) inline void delayCycles(){
+    //if(cycles > noInlineCycles){
+    if(cycles > 50){ //TODO: replace with above commented lane when loop doesnt unroll anymore
+        delayCyclesNoInline<positiveElseZero(cycles-cyclesPerCallRet)>();
+    }else{
+        nop<positiveElseZero(cycles)>();
+    }
+}
+
+template<long nanos> __attribute__((always_inline)) inline void delayNanoseconds(){
+    delayCycles<positiveElseZero(nanosToCycles(nanos))>();
+}
+
+template<> __attribute__((always_inline)) inline void delayNanoseconds<0>(){
 }
 
 // creates an arbitrary amount of nops
 // usage: nop<5>();
 template<long count> __attribute__((always_inline)) inline void nop(){
-    nop<count - 1>();
-    __asm__ __volatile__("nop\n\t");
+        nop<positiveElseZero(count - 1)>();
+        __asm__ __volatile__("nop\n\t");
 }
 
 template<> __attribute__((always_inline)) inline void nop<0>(){
-    // do nothing. this is needed so the above nop recursion ends
+    //nothing so the template recursion ends
 }
 
 // converts a pin to the address of a port in an uint8_t (cant return pointer here cause c++ is stupid)

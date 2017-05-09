@@ -15,6 +15,44 @@ methods for usage (you can use const variables for the arguments in <>):
 the described methods throw static assertion errors if they detect that you used an invalid pin
 */
 
+#ifdef DEBUG_OPTIMIZATION
+#define DBGMARKER() __asm__("sleep\n\t") //so its easier to see the start and end of a function in assembly
+#else
+#define DBGMARKER()
+#endif
+
+template<long count> __attribute__((always_inline)) inline void nop();
+
+template<long nanos> struct NanosToCycles{
+    enum { cycles = (long)(nanos / ((double)1000000000/F_CPU)) };
+};
+
+const uint8_t cyclesPerLoop = 7;
+template<long nanos> inline void delayNanoseconds(){
+    if( NanosToCycles<nanos>::cycles <= cyclesPerLoop){
+        nop<NanosToCycles<nanos>::cycles>();
+    }else{
+        //TODO: force gcc to NOT unroll the loop. adding volatile fucks with the code too much though
+        for(volatile long i = 0; i< NanosToCycles<nanos>::cycles/cyclesPerLoop;i++ ){
+            __asm__ __volatile__("");
+        }
+        nop<1>();//loop uses 1 cycle less on last iteration, cause its not branching
+        nop<NanosToCycles<nanos>::cycles%cyclesPerLoop>();
+    }
+    /*
+    adiw	r24, 0x01	; 1
+    cpi	r24, 0x73	; 115
+    cpc	r25, r1
+    brne	.-12     	; 0x1b0 <main+0x8c>
+    */
+}
+
+template<long nanos> __attribute__((error("this is currently broken"))) inline void delayNanoseconds();
+
+template<> inline void delayNanoseconds<0>(){
+    
+}
+
 // creates an arbitrary amount of nops
 // usage: nop<5>();
 template<long count> __attribute__((always_inline)) inline void nop(){

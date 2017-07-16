@@ -31,7 +31,7 @@ public:
 		_state = state;
 	}
 
-	setStateFunction(int state, stateFunction function) {
+	void setStateFunction(int state, stateFunction function) {
 		stateFunctions[state] = function;
 	}
 

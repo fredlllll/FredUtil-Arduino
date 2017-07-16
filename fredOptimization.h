@@ -56,7 +56,7 @@ template<> __attribute__((noinline)) void delayCyclesNoInline<0>(){
 
 template<long cycles> __attribute__((always_inline)) inline void delayCycles(){
     //if(cycles > noInlineCycles){
-    if(cycles > 50){ //TODO: replace with above commented lane when loop doesnt unroll anymore
+    if(cycles > 500){ //TODO: replace with above commented lane when loop doesnt unroll anymore
         delayCyclesNoInline<positiveElseZero(cycles-cyclesPerCallRet)>();
     }else{
         nop<positiveElseZero(cycles)>();

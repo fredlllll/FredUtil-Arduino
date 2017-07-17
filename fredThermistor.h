@@ -1,3 +1,5 @@
+#ifndef FREDTHERMISTOR_H
+#define FREDTHERMISTOR_H
 
 class FredThermistor{
 	const int R_resistor, R_thermistor;
@@ -31,3 +33,4 @@ class FredThermistor{
 		return temp;
 	}
 };
+#endif

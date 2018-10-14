@@ -2,7 +2,7 @@
 #define FREDTIMERTIMEOUT_H
 struct FredTimerTimeout {
     unsigned long duration;
-    unsigned long lastOccured;
+    volatile unsigned long lastOccured;
 
     FredTimerTimeout(uint32_t duration) :
             duration(duration), lastOccured(millis()) {

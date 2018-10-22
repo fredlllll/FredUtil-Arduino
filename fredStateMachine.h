@@ -9,7 +9,7 @@ typedef void (*stateEnterLeaveHandler)(int);
 
 const int noState = -1;
 
-template<int statecount> class fredStateMachine {
+template<int maxstatecount> class fredStateMachine {
 private:
 #ifdef USEENTERFUNCTIONS
     stateEnterLeaveHandler stateEnterHandlers[statecount];
@@ -17,11 +17,12 @@ private:
 #ifdef USELEAVEFUNCTIONS
     stateEnterLeaveHandler stateLeaveHandlers[statecount];
 #endif
-    stateFunction stateFunctions[statecount];
+    stateFunction stateFunctions[maxstatecount];
     volatile int _state;
+    int statecount;
 public:
     fredStateMachine() :
-            _state(noState) {
+            _state(noState), statecount(0) {
     }
 
     void loop() {
@@ -67,8 +68,11 @@ public:
         }
     }
 
-    void setStateFunction(int state, stateFunction function) {
-        stateFunctions[state] = function;
+    int addStateFunction(stateFunction function) {
+        int index = statecount;
+        statecount++;
+        stateFunctions[index] = function;
+        return index;
     }
 
 #ifdef USEENTERFUNCTIONS

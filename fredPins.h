@@ -50,7 +50,7 @@ struct AnalogPin {
         return pin;
     }
 
-    inline uint8_t analogRead() const {
+    inline int analogRead() const {
         return ::analogRead(pin);
     }
 };
